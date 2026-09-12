@@ -36,6 +36,13 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
         local_path = path.strip('/')
 
+        # translate_path() is bypassed here, so the URL is unnormalised.
+        root = os.path.realpath(os.getcwd())
+        target = os.path.realpath(os.path.join(root, local_path))
+        if target != root and not target.startswith(root + os.sep):
+            self.send_error(403, "Forbidden")
+            return
+
         # ?search= names a glossary entry. Only descend when it exists, so a
         # stray search on a chapter URL still renders the chapter.
         search_match = re.search(r'(?:^|&)search=([A-Za-z_][A-Za-z0-9_]*)(?:&|$)', query)
