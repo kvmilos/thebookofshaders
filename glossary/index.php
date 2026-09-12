@@ -2,16 +2,7 @@
 
 	$path = "..";
 	$subtitle = ": Glossary";
-	$README = "README";
 	$language = "";
-
-	if ( isset($_GET['lan']) && is_string($_GET['lan'])
-	     && preg_match('/\A[A-Za-z][A-Za-z0-9_-]{0,11}\z/', $_GET['lan']) ) {
-		if (file_exists($README.'-'.$_GET['lan'].'.md')) {
-			$language = '-'.$_GET['lan'];
-			$README .= $language;
-		}
-	}
 
 	// An entry is a directory name, so allow only the characters a GLSL
 	// identifier can contain. is_string() first: ?search[]= is an array.
@@ -20,6 +11,20 @@
 	     && preg_match('/\A[A-Za-z_][A-Za-z0-9_]*\z/', $_GET['search']) ) {
 		$search = $_GET['search'];
 		$subtitle = ": ".htmlspecialchars($search, ENT_QUOTES, 'UTF-8');
+	}
+
+	if ( isset($_GET['lan']) && is_string($_GET['lan'])
+	     && preg_match('/\A[A-Za-z][A-Za-z0-9_-]{0,11}\z/', $_GET['lan']) ) {
+		$language = '-'.$_GET['lan'];
+	}
+
+	// The index and each entry are translated separately, so pick the
+	// translation per file and fall back to English rather than nothing.
+	$dir = is_dir($search) ? $search.'/' : '';
+	$file = $dir.'README'.$language.'.md';
+	if (!file_exists($file)) {
+		$language = '';
+		$file = $dir.'README.md';
 	}
 
 	include($path."/header.php");
@@ -33,10 +38,8 @@
 
 <?php
 	$Parsedown = new Parsedown();
-	if ($search === '')
-		echo $Parsedown->text(file_get_contents($README.'.md'));
-	else
-		echo $Parsedown->text(file_get_contents($search.'/'.$README.'.md'));
+	if (file_exists($file))
+		echo $Parsedown->text(file_get_contents($file));
 
 	echo '
 	</div>
