@@ -29,15 +29,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
     def serve_chapter(self, path, query=''):
-        lan_suffix = ''
-        if 'lan=tr' in query:
-            lan_suffix = '-tr'
-        elif 'lan=es' in query:
-            lan_suffix = '-es'
-        elif 'lan=jp' in query:
-            lan_suffix = '-jp'
-        elif 'lan=fr' in query:
-            lan_suffix = '-fr'
+        # Anything that could name a README-<lan>.md file, so pt_br and
+        # pt-BR work too. No dot or slash, so it cannot leave the directory.
+        lan_match = re.search(r'(?:^|&)lan=([A-Za-z][A-Za-z0-9_-]{0,11})(?:&|$)', query)
+        lan_suffix = f'-{lan_match.group(1)}' if lan_match else ''
 
         local_path = path.strip('/')
         if local_path == '':
