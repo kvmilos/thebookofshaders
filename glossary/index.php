@@ -5,7 +5,8 @@
 	$README = "README";
 	$language = "";
 
-	if ( !empty($_GET['lan']) ) {
+	if ( isset($_GET['lan']) && is_string($_GET['lan'])
+	     && preg_match('/\A[A-Za-z][A-Za-z0-9_-]{0,11}\z/', $_GET['lan']) ) {
 		if (file_exists($README.'-'.$_GET['lan'].'.md')) {
 			$language = '-'.$_GET['lan'];
 			$README .= $language;
