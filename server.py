@@ -35,14 +35,22 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         lan_suffix = f'-{lan_match.group(1)}' if lan_match else ''
 
         local_path = path.strip('/')
-        if local_path == '':
-            readme_name = f'README{lan_suffix}.md'
-        else:
-            readme_name = os.path.join(local_path, f'README{lan_suffix}.md')
+
+        # ?search= names a glossary entry. Only descend when it exists, so a
+        # stray search on a chapter URL still renders the chapter.
+        search_match = re.search(r'(?:^|&)search=([A-Za-z_][A-Za-z0-9_]*)(?:&|$)', query)
+        if search_match:
+            entry_path = os.path.join(local_path, search_match.group(1))
+            if os.path.isdir(entry_path):
+                local_path = entry_path
+
+        readme_name = os.path.join(local_path, f'README{lan_suffix}.md')
 
         if not os.path.exists(readme_name):
-             readme_name = os.path.join(local_path, 'README.md')
-        
+            # Fall back to English; drop the suffix so the header matches.
+            lan_suffix = ''
+            readme_name = os.path.join(local_path, 'README.md')
+
         if not os.path.exists(readme_name):
             self.send_error(404, "File not found")
             return
@@ -50,9 +58,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         try:
             with open(readme_name, 'r', encoding='utf-8') as f:
                 markdown_content = f.read()
-        except:
-             self.send_error(404, "File not found or readable")
-             return
+        except OSError:
+            self.send_error(404, "File not found or readable")
+            return
 
         html_content = self.convert_markdown(markdown_content)
 
